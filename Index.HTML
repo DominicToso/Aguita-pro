@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Water Tracker">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icon.svg">
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    <title>Water Tracker Pro</title>
+    <style>
+        :root {
+            --blue-deep: #0077a8; --blue-mid: #00a8d4; --blue-light: #00d4f0;
+            --text-dark: #083d52; --text-mid: #2a7a94; --text-soft: #6aacbf;
+            --card-bg: rgba(255, 255, 255, 0.45); --shadow: 0 8px 32px rgba(0,100,160,0.1);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body { font-family: 'Nunito', sans-serif; background: #b8e8ff; min-height: 100vh; color: var(--text-dark); overflow-x: hidden; }
+        .water-wave-bg { position: fixed; bottom: 0; left: 0; width: 100%; height: 0%; background: linear-gradient(180deg, #00d4f0 0%, #0077a8 100%); z-index: -1; transition: height 1.2s cubic-bezier(0.4, 0, 0.2, 1); }
+        .water-wave-bg::before { content: ""; position: absolute; top: -20px; left: 0; width: 200%; height: 40px; background: url('data:image/svg+xml;utf8,<svg viewBox="0 0 1200 120" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none"><path d="M0,0V46.29c47.79,22.2,103.59,32.17,158,28,70.36-5.37,136.33-33.31,206.8-37.5,73.84-4.36,147.54,16.88,218.2,35.26,69.27,18,138.3,24.88,209.4,13.08,36.15-6,69.85-17.84,104.45-29.34C989.49,25,1113-14.29,1200,52.47V0Z" fill="%2300d4f0"/></svg>'); background-size: 50% 100%; animation: waveMove 8s linear infinite; }
+        @keyframes waveMove { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+        .container { max-width: 430px; margin: 0 auto; padding: 0 16px calc(env(safe-area-inset-bottom) + 20px); position: relative; z-index: 1; }
+        .header { padding-top: calc(env(safe-area-inset-top) + 20px); text-align: center; margin-bottom: 8px; }
+        .header-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .date-badge { background: var(--card-bg); backdrop-filter: blur(16px); border-radius: 20px; padding: 8px 16px; font-size: 13px; font-weight: 700; color: var(--text-mid); border: 1px solid rgba(255,255,255,0.4); }
+        .settings-btn { width: 42px; height: 42px; background: var(--card-bg); backdrop-filter: blur(16px); border-radius: 50%; border: 1px solid rgba(255,255,255,0.4); display: flex; align-items: center; justify-content: center; cursor: pointer; }
+        .penguin-hero { display: flex; flex-direction: column; align-items: center; margin-bottom: 4px; }
+        .penguin-wrap { position: relative; width: 170px; height: 190px; }
+        .mood-message { font-size: 15px; font-weight: 800; color: var(--text-dark); margin-top: 6px; min-height: 22px; text-align: center; }
+        .circle-progress-wrap { display: flex; justify-content: center; margin: 16px 0 20px; }
+        .circle-progress { position: relative; width: 180px; height: 180px; }
+        .circle-svg { transform: rotate(-90deg); }
+        .circle-track { fill: none; stroke: rgba(255,255,255,0.3); stroke-width: 14; }
+        .circle-fill { fill: none; stroke: #fff; stroke-width: 14; stroke-linecap: round; stroke-dasharray: 502; stroke-dashoffset: 502; transition: stroke-dashoffset 0.7s cubic-bezier(0.4, 0, 0.2, 1); }
+        .circle-inner { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .circle-ml { font-size: 36px; font-weight: 900; color: var(--text-dark); line-height: 1; }
+        .circle-pct { font-size: 20px; font-weight: 900; color: var(--blue-deep); margin-top: 2px; }
+        .stat-card, .bottle-btn, .timeline-card { background: var(--card-bg); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.5); box-shadow: var(--shadow); border-radius: 20px; }
+        .stats-row { display: flex; gap: 10px; margin-bottom: 20px; }
+        .stat-card { flex: 1; padding: 12px; text-align: center; }
+        .stat-val { font-size: 20px; font-weight: 900; color: var(--text-dark); }
+        .stat-lbl { font-size: 10px; font-weight: 800; color: var(--text-mid); text-transform: uppercase; }
+        .bottles-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 12px; }
+        .bottle-btn { padding: 16px; cursor: pointer; text-align: center; transition: transform 0.1s; }
+        .bottle-btn:active { transform: scale(0.95); }
+        .bottle-size { font-size: 18px; font-weight: 900; color: var(--blue-deep); }
+        .timeline-card { margin-top: 20px; padding: 16px; }
+        .timeline-header { font-size: 13px; font-weight: 800; color: var(--text-soft); text-transform: uppercase; margin-bottom: 12px; display: flex; justify-content: space-between; }
+        .timeline-list { display: flex; flex-direction: column; gap: 8px; max-height: 150px; overflow-y: auto; }
+        .timeline-item { display: flex; justify-content: space-between; font-size: 14px; font-weight: 700; padding: 4px 0; border-bottom: 1px solid rgba(0,0,0,0.05); }
+        .timeline-time { color: var(--text-soft); font-size: 12px; }
+        .toast { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%) translateY(20px); background: var(--text-dark); color: white; padding: 12px 24px; border-radius: 100px; opacity: 0; transition: all 0.3s; z-index: 200; font-weight: 800; }
+        .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); backdrop-filter: blur(8px); z-index: 100; align-items: flex-end; }
+        .modal.active { display: flex; }
+        .modal-content { background: #f0faff; width: 100%; border-radius: 28px 28px 0 0; padding: 28px 20px; max-height: 80vh; overflow-y: auto; }
+        input, select { width: 100%; padding: 12px; border-radius: 12px; border: 1.5px solid rgba(0,0,0,0.1); margin-bottom: 16px; font-family: inherit; font-weight: 700; outline: none; }
+    </style>
+</head>
+<body>
+<div class="water-wave-bg" id="water-wave"></div>
+<div class="toast" id="toast"></div>
+<div class="container">
+    <div class="header"><div class="header-top"><div class="date-badge" id="today-date">--</div><div class="settings-btn" onclick="openSettingsModal()">⚙️</div></div></div>
+    <div class="penguin-hero"><div class="penguin-wrap"><svg width="170" height="190" viewBox="0 0 170 190" xmlns="http://www.w3.org/2000/svg">
+        <g id="penguin-body">
+            <ellipse cx="85" cy="140" rx="48" ry="52" fill="#1a1a1a"/><ellipse cx="85" cy="152" rx="36" ry="34" fill="#f5f5f5"/>
+            <circle cx="85" cy="82" r="44" fill="#1a1a1a"/><ellipse cx="85" cy="88" rx="30" ry="28" fill="#f5f5f5"/>
+            <g id="eyes"><circle cx="73" cy="78" r="6" fill="#111"/><circle cx="97" cy="78" r="6" fill="#111"/></g>
+            <ellipse cx="85" cy="96" rx="8" ry="5" fill="#ffa500"/><ellipse cx="68" cy="184" rx="16" ry="7" fill="#ff6b35"/><ellipse cx="102" cy="184" rx="16" ry="7" fill="#ff6b35"/>
+            <g id="penguin-sunglasses" style="display:none"><rect x="60" y="74" width="50" height="8" rx="2" fill="#333"/><circle cx="70" cy="78" r="10" fill="#333"/><circle cx="100" cy="78" r="10" fill="#333"/></g>
+            <g id="penguin-crown" style="display:none"><path d="M65,45 L70,30 L85,40 L100,30 L105,45 Z" fill="#ffd700" stroke="#b8860b" stroke-width="2"/></g>
+        </g></svg></div><div class="mood-message" id="mood-message">Loading...</div></div>
+    <div class="circle-progress-wrap"><div class="circle-progress"><svg class="circle-svg" width="180" height="180" viewBox="0 0 180 180"><circle class="circle-track" cx="90" cy="90" r="80"/><circle class="circle-fill" id="circle-fill" cx="90" cy="90" r="80"/></svg><div class="circle-inner"><div class="circle-ml" id="current-ml">0</div><div class="circle-pct" id="percentage">0%</div></div></div></div>
+    <div class="stats-row"><div class="stat-card"><div class="stat-val" id="goal-ml">2000</div><div class="stat-lbl">Goal</div></div><div class="stat-card"><div class="stat-val" id="streak-val">0</div><div class="stat-lbl">Streak</div></div></div>
+    <div class="bottles-grid" id="bottles-grid"></div>
+    <div class="timeline-card"><div class="timeline-header"><span>Timeline</span> <span id="log-count">0 logs</span></div><div class="timeline-list" id="timeline-list"></div></div>
+</div>
+<div class="modal" id="settingsModal"><div class="modal-content"><h2 style="margin-bottom:15px">Settings</h2><div style="background:rgba(0,0,0,0.05); padding:12px; border-radius:12px; margin-bottom:15px">
+<p style="font-size:12px; font-weight:800; color:var(--text-mid); margin-bottom:8px">SMART GOAL CALCULATOR</p><input type="number" id="weightInput" placeholder="Your weight (kg)" oninput="calcSmartGoal()"><select id="activityInput" onchange="calcSmartGoal()"><option value="low">Low Activity</option><option value="high">High Activity (+500ml)</option></select></div>
+<label style="display:block;margin-bottom:8px;font-weight:800">Daily Goal (ml)</label><input type="number" id="dailyGoalInput"><button onclick="saveSettings()" style="width:100%;padding:15px;background:#00a8d4;color:white;border:none;border-radius:12px;font-weight:800;margin-bottom:10px">Save Changes</button><button onclick="resetAll()" style="width:100%;padding:10px;background:none;color:#d63031;border:none;font-weight:800">Reset All Data</button></div></div>
+<script>
+    let appState = { bottles: [{ id: 1, name: 'Small', volume: 150, icon: '🫗' }, { id: 2, name: 'Glass', volume: 250, icon: '🥤' }, { id: 3, name: 'Bottle', volume: 500, icon: '🧴' }, { id: 4, name: 'Large', volume: 1000, icon: '🍶' }], dailyGoal: 2000, todayIntake: 0, streak: 0, history: [], lastDate: new Date().toDateString() };
+    const MOODS = [{ threshold: 0, msg: "Desert penguin vibes. 🌵" }, { threshold: 10, msg: "First sip! Feels good. 🐧" }, { threshold: 40, msg: "I'm starting to float! 🌊" }, { threshold: 70, msg: "Basically a submarine now. 🚢" }, { threshold: 100, msg: "GLUG GLUG! Goal smashed! 🏆" }];
+    function init() { const saved = localStorage.getItem('waterTrackerProV4'); if (saved) appState = JSON.parse(saved); checkDayReset(); renderBottles(); updateUI(); updateDate(); if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js'); }
+    function checkDayReset() { const today = new Date().toDateString(); if (appState.lastDate !== today) { if (appState.todayIntake >= appState.dailyGoal) appState.streak++; else appState.streak = 0; appState.todayIntake = 0; appState.history = []; appState.lastDate = today; save(); } }
+    function logWater(vol, icon) { appState.todayIntake += vol; appState.history.unshift({ time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), vol, icon }); save(); updateUI(); showToast(`+${vol}ml ${icon}`); }
+    function updateUI() {
+        const pct = Math.min(Math.round((appState.todayIntake / appState.dailyGoal) * 100), 100);
+        document.getElementById('water-wave').style.height = pct + '%';
+        document.getElementById('penguin-sunglasses').style.display = pct >= 70 ? 'block' : 'none';
+        document.getElementById('penguin-crown').style.display = pct >= 100 ? 'block' : 'none';
+        animateValue("current-ml", parseInt(document.getElementById('current-ml').innerText) || 0, appState.todayIntake, 600);
+        document.getElementById('percentage').innerText = pct + '%'; document.getElementById('goal-ml').innerText = appState.dailyGoal; document.getElementById('streak-val').innerText = appState.streak;
+        document.getElementById('circle-fill').style.strokeDashoffset = 502 - (pct / 100) * 502;
+        let mood = MOODS[0]; MOODS.forEach(m => { if(pct >= m.threshold) mood = m; });
+        document.getElementById('mood-message').innerText = mood.msg;
+        document.getElementById('timeline-list').innerHTML = appState.history.map(h => `<div class="timeline-item"><span>${h.icon} ${h.vol}ml</span><span class="timeline-time">${h.time}</span></div>`).join('');
+        document.getElementById('log-count').innerText = `${appState.history.length} logs`;
+    }
+    function animateValue(id, start, end, duration) { if (start === end) return; let current = start; const range = end - start; const stepTime = Math.abs(Math.floor(duration / (range / 10))); const obj = document.getElementById(id); const timer = setInterval(() => { current += (range > 0 ? 10 : -10); obj.innerText = current; if ((range > 0 && current >= end) || (range < 0 && current <= end)) { obj.innerText = end; clearInterval(timer); } }, stepTime || 10); }
+    function calcSmartGoal() { const weight = parseFloat(document.getElementById('weightInput').value); if (!weight) return; let goal = weight * 33; if (document.getElementById('activityInput').value === 'high') goal += 500; document.getElementById('dailyGoalInput').value = Math.round(goal); }
+    function renderBottles() { document.getElementById('bottles-grid').innerHTML = appState.bottles.map(b => `<div class="bottle-btn" onclick="logWater(${b.volume}, '${b.icon}')"><div style="font-size:24px">${b.icon}</div><div class="bottle-size">${b.volume}ml</div><div style="font-size:11px; font-weight:700; color:var(--text-soft)">${b.name}</div></div>`).join(''); }
+    function showToast(msg) { const t = document.getElementById('toast'); t.innerText = msg; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 2000); }
+    function save() { localStorage.setItem('waterTrackerProV4', JSON.stringify(appState)); }
+    function openSettingsModal() { document.getElementById('dailyGoalInput').value = appState.dailyGoal; document.getElementById('settingsModal').style.display = 'flex'; }
+    function saveSettings() { appState.dailyGoal = parseInt(document.getElementById('dailyGoalInput').value) || 2000; save(); updateUI(); document.getElementById('settingsModal').style.display = 'none'; }
+    function resetAll() { if(confirm("Clear all?")) { localStorage.clear(); location.reload(); } }
+    function updateDate() { document.getElementById('today-date').innerText = new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }); }
+    window.onload = init;
+</script>
+</body>
+</html>
